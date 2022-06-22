@@ -61,7 +61,6 @@ export class JointJsDebuggerPanel extends DebuggerPanel<
   }
 
   protected updateRenderingArea(data: JointJsRenderingAreaUpdateData): void {
-    console.info('JointJsDebuggerPanel.updateRenderingArea', { data });
     this.initializeFromObjectDiagram({
       structures: data.structuresToBeRestored,
       fields: data.fieldsToBeRestored,
@@ -94,9 +93,20 @@ export class JointJsDebuggerPanel extends DebuggerPanel<
     if (!svgSvgElement) {
       throw new Error('SVG element not found');
     }
+    const { document } = this;
+    const svgSvgElementDeepClone = svgSvgElement.cloneNode(true) as SVGSVGElement;
+    Array.from(document.styleSheets)
+      .reverse()
+      .forEach((styleSheet) => {
+        const styleElement = document.createElement('style');
+        styleElement.textContent = Array.from(styleSheet.cssRules)
+          .map(({ cssText }) => cssText)
+          .join('');
+        svgSvgElementDeepClone.prepend(styleElement);
+      });
     this.downloadFile(
       'export.svg',
-      `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svgSvgElement))}`
+      `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svgSvgElementDeepClone))}`
     );
   }
 
